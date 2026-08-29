@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WasteVision — AI Waste Detector</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #0A0F0D;
+    --surface:   #111813;
+    --card:      #161E18;
+    --border:    #1E2B21;
+    --accent:    #39FF85;
+    --accent-dim:#1A7A3D;
+    --warn:      #FFB830;
+    --danger:    #FF4D4D;
+    --text:      #E8F0EA;
+    --muted:     #6B7D6E;
+    --scan:      rgba(57,255,133,0.08);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2rem;
+    height: 60px;
+    background: rgba(10,15,13,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .logo {
+    font-family: 'Space Mono', monospace;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--accent);
+    letter-spacing: -0.02em;
+  }
+  .logo span { color: var(--text); }
+  nav ul { list-style: none; display: flex; gap: 2rem; }
+  nav ul a {
+    text-decoration: none; color: var(--muted);
+    font-size: 0.875rem; font-weight: 500;
+    transition: color 0.2s;
+  }
+  nav ul a:hover { color: var(--text); }
+  .nav-cta {
+    background: var(--accent); color: var(--bg);
+    padding: 0.45rem 1.1rem; border-radius: 6px;
+    font-size: 0.85rem; font-weight: 700;
+    text-decoration: none;
+    transition: opacity 0.2s;
+  }
+  .nav-cta:hover { opacity: 0.85; }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 100px 2rem 4rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 60% 50% at 50% 60%, rgba(57,255,133,0.07) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .eyebrow {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem; letter-spacing: 0.15em;
+    color: var(--accent); text-transform: uppercase;
+    margin-bottom: 1.25rem;
+    opacity: 0; animation: fadeUp 0.6s ease 0.1s forwards;
+  }
+  .hero h1 {
+    font-size: clamp(2.8rem, 7vw, 5.5rem);
+    font-weight: 700; line-height: 1.05;
+    letter-spacing: -0.03em;
+    max-width: 800px;
+    opacity: 0; animation: fadeUp 0.6s ease 0.25s forwards;
+  }
+  .hero h1 em {
+    font-style: normal;
+    color: var(--accent);
+  }
+  .hero p {
+    margin-top: 1.5rem;
+    max-width: 520px;
+    color: var(--muted);
+    font-size: 1.1rem;
+    opacity: 0; animation: fadeUp 0.6s ease 0.4s forwards;
+  }
+  .hero-actions {
+    display: flex; gap: 1rem; margin-top: 2.5rem;
+    opacity: 0; animation: fadeUp 0.6s ease 0.55s forwards;
+  }
+  .btn-primary {
+    background: var(--accent); color: var(--bg);
+    padding: 0.8rem 1.8rem; border-radius: 8px;
+    font-weight: 700; font-size: 0.95rem;
+    text-decoration: none; border: none; cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 0 24px rgba(57,255,133,0.25);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 36px rgba(57,255,133,0.35); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text); border: 1px solid var(--border);
+    padding: 0.8rem 1.8rem; border-radius: 8px;
+    font-weight: 500; font-size: 0.95rem;
+    text-decoration: none; cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── STATS BAR ── */
+  .stats-bar {
+    display: flex; justify-content: center; gap: 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    overflow: hidden;
+  }
+  .stat {
+    flex: 1; max-width: 220px;
+    padding: 1.5rem 2rem; text-align: center;
+    border-right: 1px solid var(--border);
+  }
+  .stat:last-child { border-right: none; }
+  .stat-val {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.9rem; font-weight: 700;
+    color: var(--accent); line-height: 1;
+  }
+  .stat-label { font-size: 0.8rem; color: var(--muted); margin-top: 0.3rem; }
+
+  /* ── SCAN DEMO ── */
+  .section { padding: 6rem 2rem; max-width: 1100px; margin: 0 auto; }
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem; letter-spacing: 0.14em;
+    color: var(--accent); text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+  .section-title {
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    font-weight: 700; letter-spacing: -0.025em; line-height: 1.15;
+    max-width: 500px; margin-bottom: 1rem;
+  }
+  .section-sub { color: var(--muted); max-width: 460px; margin-bottom: 3rem; line-height: 1.7; }
+
+  .demo-grid {
+    display: grid; grid-template-columns: 1fr 380px; gap: 1.5rem;
+    align-items: start;
+  }
+
+  /* Upload zone */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 16px;
+    background: var(--card);
+    min-height: 420px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 1rem;
+    cursor: pointer;
+    transition: border-color 0.25s, background 0.25s;
+    position: relative; overflow: hidden;
+    text-align: center; padding: 2rem;
+  }
+  .upload-zone:hover, .upload-zone.drag {
+    border-color: var(--accent);
+    background: var(--scan);
+  }
+  .upload-icon {
+    width: 64px; height: 64px;
+    background: rgba(57,255,133,0.08);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem;
+  }
+  .upload-zone h3 { font-size: 1.1rem; font-weight: 600; }
+  .upload-zone p { font-size: 0.85rem; color: var(--muted); }
+  .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+  /* Scan animation overlay */
+  .scan-line {
+    position: absolute; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    box-shadow: 0 0 12px var(--accent);
+    animation: scan 2s ease-in-out infinite;
+    display: none;
+  }
+  .scanning .scan-line { display: block; }
+  .scanning { border-color: var(--accent) !important; }
+
+  /* Preview image */
+  .preview-img {
+    width: 100%; height: 100%; object-fit: cover;
+    border-radius: 14px;
+    position: absolute; inset: 0;
+  }
+  .preview-overlay {
+    position: absolute; inset: 0;
+    background: rgba(10,15,13,0.55);
+    border-radius: 14px;
+    display: flex; flex-direction: column;
+    align-items: flex-start; justify-content: flex-end;
+    padding: 1.5rem;
+    gap: 0.5rem;
+  }
+  .bbox {
+    position: absolute;
+    border: 2px solid var(--accent);
+    border-radius: 4px;
+    box-shadow: 0 0 8px rgba(57,255,133,0.4);
+    display: none;
+  }
+  .bbox-label {
+    position: absolute; top: -22px; left: 0;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem; font-weight: 700;
+    background: var(--accent); color: var(--bg);
+    padding: 1px 6px; border-radius: 3px;
+    white-space: nowrap;
+  }
+  .bbox.show { display: block; }
+
+  /* Results panel */
+  .results-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    min-height: 420px;
+  }
+  .panel-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .panel-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.78rem; font-weight: 700;
+    letter-spacing: 0.06em; color: var(--muted);
+    text-transform: uppercase;
+  }
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--accent-dim);
+    transition: background 0.3s;
+  }
+  .status-dot.active { background: var(--accent); box-shadow: 0 0 6px var(--accent); animation: pulse 1.2s ease infinite; }
+
+  .panel-body { padding: 1.25rem; flex: 1; display: flex; flex-direction: column; gap: 0.75rem; }
+
+  .empty-state {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    color: var(--muted); font-size: 0.875rem; gap: 0.5rem;
+    text-align: center;
+  }
+  .empty-icon { font-size: 2rem; opacity: 0.4; }
+
+  .detection-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.85rem 1rem;
+    display: flex; align-items: center; gap: 0.75rem;
+    opacity: 0;
+    transform: translateX(8px);
+    transition: opacity 0.3s, transform 0.3s;
+  }
+  .detection-item.show { opacity: 1; transform: translateX(0); }
+  .det-icon {
+    width: 36px; height: 36px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; flex-shrink: 0;
+  }
+  .det-info { flex: 1; }
+  .det-name { font-weight: 600; font-size: 0.9rem; }
+  .det-sub { font-size: 0.78rem; color: var(--muted); margin-top: 1px; }
+  .det-conf {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem; font-weight: 700;
+  }
+  .conf-bar-wrap {
+    height: 3px; background: var(--border); border-radius: 2px; margin-top: 6px;
+  }
+  .conf-bar { height: 100%; border-radius: 2px; background: var(--accent); transition: width 0.6s ease; }
+
+  .tag {
+    display: inline-block; padding: 0.2rem 0.6rem;
+    border-radius: 4px; font-size: 0.7rem; font-weight: 700;
+    font-family: 'Space Mono', monospace; letter-spacing: 0.04em;
+  }
+  .tag-recycle { background: rgba(57,255,133,0.12); color: var(--accent); }
+  .tag-organic { background: rgba(255,184,48,0.12); color: var(--warn); }
+  .tag-hazard  { background: rgba(255,77,77,0.12); color: var(--danger); }
+  .tag-general { background: rgba(107,125,110,0.15); color: var(--muted); }
+
+  .scan-btn {
+    width: 100%; margin-top: auto;
+    background: var(--accent); color: var(--bg);
+    border: none; border-radius: 8px;
+    padding: 0.85rem; font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700; font-size: 0.95rem; cursor: pointer;
+    transition: opacity 0.2s, transform 0.15s;
+    box-shadow: 0 0 20px rgba(57,255,133,0.18);
+  }
+  .scan-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+  .scan-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+  /* Sample images */
+  .sample-section { padding: 0 2rem 2rem; max-width: 1100px; margin: 0 auto; }
+  .sample-label { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.75rem; }
+  .sample-images { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+  .sample-thumb {
+    width: 72px; height: 72px; border-radius: 10px;
+    border: 2px solid var(--border);
+    overflow: hidden; cursor: pointer;
+    transition: border-color 0.2s, transform 0.15s;
+    background: var(--card);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem;
+  }
+  .sample-thumb:hover { border-color: var(--accent); transform: scale(1.05); }
+  .sample-thumb.active { border-color: var(--accent); box-shadow: 0 0 10px rgba(57,255,133,0.3); }
+
+  /* ── CATEGORIES ── */
+  .categories-section { background: var(--surface); padding: 5rem 2rem; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .categories-inner { max-width: 1100px; margin: 0 auto; }
+  .categories-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 3rem; }
+  .cat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px; padding: 1.5rem;
+    transition: border-color 0.25s, transform 0.2s;
+  }
+  .cat-card:hover { border-color: var(--accent-dim); transform: translateY(-3px); }
+  .cat-card .icon { font-size: 2rem; margin-bottom: 0.75rem; }
+  .cat-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem; }
+  .cat-card p { font-size: 0.83rem; color: var(--muted); line-height: 1.55; }
+  .cat-card .examples { margin-top: 0.75rem; display: flex; flex-wrap: wrap; gap: 0.35rem; }
+
+  /* ── HOW IT WORKS ── */
+  .how-section { padding: 6rem 2rem; max-width: 1100px; margin: 0 auto; }
+  .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-top: 3rem; }
+  .step {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; padding: 1.75rem;
+    position: relative;
+  }
+  .step-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem; font-weight: 700;
+    color: var(--accent); letter-spacing: 0.1em;
+    margin-bottom: 1rem;
+  }
+  .step h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
+  .step p { font-size: 0.83rem; color: var(--muted); line-height: 1.6; }
+  .step-connector {
+    display: none;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 2.5rem 2rem;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.82rem;
+    background: var(--surface);
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+
+  /* ── KEYFRAMES ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes scan {
+    0%   { top: 0%; }
+    50%  { top: calc(100% - 2px); }
+    100% { top: 0%; }
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 780px) {
+    .demo-grid { grid-template-columns: 1fr; }
+    .results-panel { min-height: 260px; }
+    nav ul { display: none; }
+    .stat { padding: 1rem; }
+    .stat-val { font-size: 1.4rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">Waste<span>Vision</span></div>
+  <ul>
+    <li><a href="#demo">Detect</a></li>
+    <li><a href="#categories">Categories</a></li>
+    <li><a href="#how">How it works</a></li>
+  </ul>
+  <a href="#demo" class="nav-cta">Try it free</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="eyebrow">AI-Powered Environmental Intelligence</div>
+  <h1>Identify waste.<br><em>Sort it right.</em><br>Every time.</h1>
+  <p>Point your camera at any waste item. WasteVision's neural network classifies it in under a second — recyclable, organic, hazardous, or general waste.</p>
+  <div class="hero-actions">
+    <a href="#demo" class="btn-primary">Start detecting →</a>
+    <a href="#how" class="btn-ghost">How it works</a>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stat"><div class="stat-val">97.4%</div><div class="stat-label">Detection accuracy</div></div>
+  <div class="stat"><div class="stat-val">200+</div><div class="stat-label">Waste categories</div></div>
+  <div class="stat"><div class="stat-val">&lt;1s</div><div class="stat-label">Scan time</div></div>
+  <div class="stat"><div class="stat-val">4</div><div class="stat-label">Disposal streams</div></div>
+</div>
+
+<!-- DEMO SECTION -->
+<section class="section" id="demo">
+  <div class="section-label">Live Demo</div>
+  <h2 class="section-title">Drop an image. Get instant results.</h2>
+  <p class="section-sub">Upload a photo of any waste item and our model will detect, classify, and recommend the correct disposal method.</p>
+
+  <div class="demo-grid">
+    <!-- Upload / Preview zone -->
+    <div class="upload-zone" id="uploadZone">
+      <div class="scan-line" id="scanLine"></div>
+      <input type="file" id="fileInput" accept="image/*">
+      <div class="upload-icon" id="uploadIcon">📷</div>
+      <h3 id="uploadTitle">Drop an image here</h3>
+      <p id="uploadSub">or click to browse — JPG, PNG, WEBP</p>
+      <!-- Bounding boxes -->
+      <div class="bbox" id="bbox1" style="top:18%;left:12%;width:35%;height:40%"><div class="bbox-label">Plastic Bottle 94%</div></div>
+      <div class="bbox" id="bbox2" style="top:55%;left:55%;width:28%;height:30%"><div class="bbox-label">Cardboard 88%</div></div>
+    </div>
+
+    <!-- Results panel -->
+    <div class="results-panel">
+      <div class="panel-header">
+        <span class="panel-title">Detection Output</span>
+        <div class="status-dot" id="statusDot"></div>
+      </div>
+      <div class="panel-body" id="panelBody">
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon">🔍</div>
+          <div>Upload an image to begin scanning</div>
+        </div>
+
+        <!-- Results injected here -->
+        <div id="detections" style="display:none; flex-direction:column; gap:0.75rem; flex:1;"></div>
+      </div>
+      <div style="padding: 0 1.25rem 1.25rem;">
+        <button class="scan-btn" id="scanBtn" onclick="runScan()">Scan for Waste</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SAMPLE IMAGES -->
+<div class="sample-section">
+  <div class="sample-label">Try a sample image:</div>
+  <div class="sample-images">
+    <div class="sample-thumb" onclick="loadSample(0)" title="Plastic bottle">🍶</div>
+    <div class="sample-thumb" onclick="loadSample(1)" title="Food waste">🥑</div>
+    <div class="sample-thumb" onclick="loadSample(2)" title="Battery">🔋</div>
+    <div class="sample-thumb" onclick="loadSample(3)" title="Newspaper">📰</div>
+    <div class="sample-thumb" onclick="loadSample(4)" title="Glass jar">🫙</div>
+    <div class="sample-thumb" onclick="loadSample(5)" title="Styrofoam">📦</div>
+  </div>
+</div>
+
+<!-- CATEGORIES SECTION -->
+<div class="categories-section" id="categories">
+  <div class="categories-inner">
+    <div class="section-label">Waste Streams</div>
+    <h2 class="section-title">Four bins. Zero confusion.</h2>
+    <p class="section-sub">WasteVision maps every detection to a disposal stream with plain-language instructions — no guessing.</p>
+    <div class="categories-grid">
+      <div class="cat-card">
+        <div class="icon">♻️</div>
+        <h3>Recyclable</h3>
+        <p>Clean materials that can re-enter the production cycle. Must be rinsed and dry.</p>
+        <div class="examples">
+          <span class="tag tag-recycle">Plastic PET</span>
+          <span class="tag tag-recycle">Cardboard</span>
+          <span class="tag tag-recycle">Glass</span>
+          <span class="tag tag-recycle">Aluminium</span>
+        </div>
+      </div>
+      <div class="cat-card">
+        <div class="icon">🌱</div>
+        <h3>Organic</h3>
+        <p>Biodegradable matter that becomes compost or biogas. Keep free of packaging.</p>
+        <div class="examples">
+          <span class="tag tag-organic">Food scraps</span>
+          <span class="tag tag-organic">Garden waste</span>
+          <span class="tag tag-organic">Coffee grounds</span>
+        </div>
+      </div>
+      <div class="cat-card">
+        <div class="icon">⚠️</div>
+        <h3>Hazardous</h3>
+        <p>Items that require special handling to prevent environmental or health risks.</p>
+        <div class="examples">
+          <span class="tag tag-hazard">Batteries</span>
+          <span class="tag tag-hazard">Electronics</span>
+          <span class="tag tag-hazard">Paint</span>
+          <span class="tag tag-hazard">Chemicals</span>
+        </div>
+      </div>
+      <div class="cat-card">
+        <div class="icon">🗑️</div>
+        <h3>General</h3>
+        <p>Non-recyclable residual waste destined for landfill or energy recovery.</p>
+        <div class="examples">
+          <span class="tag tag-general">Styrofoam</span>
+          <span class="tag tag-general">Dirty plastics</span>
+          <span class="tag tag-general">Ceramics</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section class="how-section" id="how">
+  <div class="section-label">Under the Hood</div>
+  <h2 class="section-title">From pixels to proper disposal.</h2>
+  <p class="section-sub">A four-step pipeline runs every time you scan an image — from raw pixels to actionable disposal guidance in under a second.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">01 — CAPTURE</div>
+      <h3>Image ingestion</h3>
+      <p>Upload a photo or use your camera. The image is resized and normalised for the detection model without leaving your browser.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">02 — DETECT</div>
+      <h3>Object localisation</h3>
+      <p>A YOLO-based backbone scans the frame, drawing bounding boxes around each distinct waste item it finds.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">03 — CLASSIFY</div>
+      <h3>Category mapping</h3>
+      <p>Each detected region is passed through a ResNet classifier trained on 200+ waste categories with recycling ground-truth labels.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">04 — GUIDE</div>
+      <h3>Disposal guidance</h3>
+      <p>Results are mapped to local waste regulations and displayed with confidence scores and exact bin instructions.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <strong style="color:var(--text);">WasteVision</strong> — AI waste detection for a cleaner world.<br>
+  <span style="margin-top:0.4rem;display:block;">Built with YOLOv8 · ResNet-50 · PyTorch · <a href="#">Open Source</a></span>
+</footer>
+
+<script>
+  // ── Sample waste data ──
+  const SAMPLES = [
+    {
+      emoji:'🍶', name:'Plastic Bottle', label:'Recyclable', tag:'tag-recycle',
+      items:[
+        {icon:'🍶', name:'Plastic Bottle (PET)', sub:'Rinse, remove cap, crush flat', conf:94, tag:'tag-recycle', label:'Recyclable'},
+        {icon:'🔵', name:'Plastic Cap (PP)',     sub:'Place in general waste bin',   conf:87, tag:'tag-general', label:'General'},
+      ]
+    },
+    {
+      emoji:'🥑', name:'Food Waste', label:'Organic', tag:'tag-organic',
+      items:[
+        {icon:'🥑', name:'Avocado pit',       sub:'Compostable — organic bin', conf:91, tag:'tag-organic', label:'Organic'},
+        {icon:'🟫', name:'Avocado skin',       sub:'Compostable — organic bin', conf:89, tag:'tag-organic', label:'Organic'},
+      ]
+    },
+    {
+      emoji:'🔋', name:'Battery', label:'Hazardous', tag:'tag-hazard',
+      items:[
+        {icon:'🔋', name:'AA Battery (Alkaline)', sub:'Drop-off at collection point only', conf:97, tag:'tag-hazard', label:'Hazardous'},
+      ]
+    },
+    {
+      emoji:'📰', name:'Newspaper', label:'Recyclable', tag:'tag-recycle',
+      items:[
+        {icon:'📰', name:'Newspaper',    sub:'Paper recycling bin — dry only', conf:96, tag:'tag-recycle', label:'Recyclable'},
+        {icon:'📎', name:'Metal staple', sub:'Usually fine to leave in',        conf:72, tag:'tag-recycle', label:'Recyclable'},
+      ]
+    },
+    {
+      emoji:'🫙', name:'Glass Jar', label:'Recyclable', tag:'tag-recycle',
+      items:[
+        {icon:'🫙', name:'Glass Jar (clear)', sub:'Glass bank — rinse first', conf:95, tag:'tag-recycle', label:'Recyclable'},
+        {icon:'🔩', name:'Metal Lid',         sub:'Metal recycling or general', conf:82, tag:'tag-recycle', label:'Recyclable'},
+      ]
+    },
+    {
+      emoji:'📦', name:'Styrofoam', label:'General', tag:'tag-general',
+      items:[
+        {icon:'📦', name:'Expanded Polystyrene', sub:'General waste — not recyclable in most areas', conf:93, tag:'tag-general', label:'General'},
+      ]
+    },
+  ];
+
+  let activeSample = null;
+  let hasImage = false;
+
+  const uploadZone = document.getElementById('uploadZone');
+  const uploadIcon = document.getElementById('uploadIcon');
+  const uploadTitle = document.getElementById('uploadTitle');
+  const uploadSub   = document.getElementById('uploadSub');
+  const scanBtn     = document.getElementById('scanBtn');
+  const fileInput   = document.getElementById('fileInput');
+
+  // Drag & drop
+  uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag'); });
+  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag'));
+  uploadZone.addEventListener('drop', e => {
+    e.preventDefault(); uploadZone.classList.remove('drag');
+    const f = e.dataTransfer.files[0];
+    if (f && f.type.startsWith('image/')) loadFile(f);
+  });
+
+  fileInput.addEventListener('change', e => {
+    if (e.target.files[0]) loadFile(e.target.files[0]);
+  });
+
+  function loadFile(file) {
+    activeSample = null;
+    document.querySelectorAll('.sample-thumb').forEach(t => t.classList.remove('active'));
+    const reader = new FileReader();
+    reader.onload = ev => showPreview(ev.target.result, 'Uploaded image', 'Ready to scan');
+    reader.readAsDataURL(file);
+  }
+
+  function loadSample(idx) {
+    activeSample = idx;
+    document.querySelectorAll('.sample-thumb').forEach((t, i) => t.classList.toggle('active', i === idx));
+    const s = SAMPLES[idx];
+    // Create a canvas to draw emoji as "image"
+    showPreview(null, s.name, `Sample — ${s.label}`, s.emoji);
+    resetResults();
+  }
+
+  function showPreview(src, title, sub, emoji) {
+    hasImage = true;
+    // Clear existing preview img
+    const old = uploadZone.querySelector('.preview-img');
+    if (old) old.remove();
+    const oldOv = uploadZone.querySelector('.preview-overlay');
+    if (oldOv) oldOv.remove();
+
+    uploadZone.classList.remove('scanning');
+    uploadZone.querySelector('#bbox1').classList.remove('show');
+    uploadZone.querySelector('#bbox2').classList.remove('show');
+
+    if (src) {
+      const img = document.createElement('img');
+      img.className = 'preview-img';
+      img.src = src;
+      uploadZone.insertBefore(img, uploadZone.firstChild);
+    }
+
+    // Update text inside zone
+    uploadIcon.textContent = emoji || '🖼️';
+    uploadTitle.textContent = title;
+    uploadSub.textContent = sub;
+
+    scanBtn.disabled = false;
+  }
+
+  function resetResults() {
+    document.getElementById('emptyState').style.display = 'flex';
+    const det = document.getElementById('detections');
+    det.style.display = 'none';
+    det.innerHTML = '';
+    document.getElementById('statusDot').classList.remove('active');
+    uploadZone.classList.remove('scanning');
+    document.getElementById('bbox1').classList.remove('show');
+    document.getElementById('bbox2').classList.remove('show');
+  }
+
+  function runScan() {
+    if (!hasImage) return;
+    const sampleIdx = activeSample;
+
+    // Start scanning animation
+    uploadZone.classList.add('scanning');
+    document.getElementById('statusDot').classList.add('active');
+    scanBtn.disabled = true;
+    scanBtn.textContent = 'Scanning…';
+    resetResults();
+    document.getElementById('emptyState').style.display = 'none';
+
+    setTimeout(() => {
+      uploadZone.classList.remove('scanning');
+
+      // Show bboxes for first two samples
+      if (sampleIdx === 0) {
+        document.getElementById('bbox1').classList.add('show');
+        document.getElementById('bbox2').classList.add('show');
+      }
+
+      const data = sampleIdx !== null ? SAMPLES[sampleIdx].items : SAMPLES[0].items;
+      showResults(data);
+      scanBtn.disabled = false;
+      scanBtn.textContent = 'Scan again';
+    }, 2200);
+  }
+
+  function showResults(items) {
+    const det = document.getElementById('detections');
+    det.style.display = 'flex';
+    det.innerHTML = '';
+
+    items.forEach((item, i) => {
+      const el = document.createElement('div');
+      el.className = 'detection-item';
+      el.innerHTML = `
+        <div class="det-icon">${item.icon}</div>
+        <div class="det-info">
+          <div class="det-name">${item.name}</div>
+          <div class="det-sub">${item.sub}</div>
+          <div class="conf-bar-wrap"><div class="conf-bar" style="width:0%" data-w="${item.conf}%"></div></div>
+        </div>
+        <div>
+          <div class="det-conf" style="color:${item.tag==='tag-recycle'?'var(--accent)':item.tag==='tag-organic'?'var(--warn)':item.tag==='tag-hazard'?'var(--danger)':'var(--muted)'}">${item.conf}%</div>
+          <div style="margin-top:4px;"><span class="tag ${item.tag}">${item.label}</span></div>
+        </div>
+      `;
+      det.appendChild(el);
+      setTimeout(() => {
+        el.classList.add('show');
+        const bar = el.querySelector('.conf-bar');
+        setTimeout(() => { bar.style.width = bar.dataset.w; }, 100);
+      }, i * 180 + 100);
+    });
+  }
+</script>
+</body>
+</html>
