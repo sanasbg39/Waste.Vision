@@ -25,9 +25,7 @@ st.markdown("""
     max-width: 1250px;
 }
 
-/* ============================================================
-   TITLES
-   ============================================================ */
+/* TITLES */
 
 .dashboard-label {
     color: #71e58b;
@@ -45,9 +43,7 @@ st.markdown("""
     margin-bottom: 18px;
 }
 
-/* ============================================================
-   STAT CARDS
-   ============================================================ */
+/* STAT CARDS */
 
 .stat-card {
     background: linear-gradient(145deg, #10271c, #0a1711);
@@ -76,9 +72,7 @@ st.markdown("""
     margin-top: 5px;
 }
 
-/* ============================================================
-   ECO SCORE
-   ============================================================ */
+/* ECO SCORE */
 
 .score-box {
     background:
@@ -88,7 +82,6 @@ st.markdown("""
             transparent 35%
         ),
         linear-gradient(135deg, #173522, #0c1d14);
-
     border: 1px solid #347149;
     border-radius: 24px;
     padding: 28px;
@@ -115,9 +108,7 @@ st.markdown("""
     margin-top: 5px;
 }
 
-/* ============================================================
-   INFO BOXES
-   ============================================================ */
+/* INFO BOXES */
 
 .info-box {
     background: #0c1b13;
@@ -189,31 +180,34 @@ if not entries:
     col1, col2, col3 = st.columns(3, gap="medium")
 
     with col1:
-        st.markdown("""
-        <div class="stat-card">
-            <div class="stat-icon">♻️</div>
-            <div class="stat-label">TOTAL WASTE</div>
-            <div class="stat-value">0 kg</div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(
+            '<div class="stat-card">'
+            '<div class="stat-icon">♻️</div>'
+            '<div class="stat-label">TOTAL WASTE</div>'
+            '<div class="stat-value">0 kg</div>'
+            '</div>',
+            unsafe_allow_html=True
+        )
 
     with col2:
-        st.markdown("""
-        <div class="stat-card">
-            <div class="stat-icon">📋</div>
-            <div class="stat-label">TOTAL ENTRIES</div>
-            <div class="stat-value">0</div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(
+            '<div class="stat-card">'
+            '<div class="stat-icon">📋</div>'
+            '<div class="stat-label">TOTAL ENTRIES</div>'
+            '<div class="stat-value">0</div>'
+            '</div>',
+            unsafe_allow_html=True
+        )
 
     with col3:
-        st.markdown("""
-        <div class="stat-card">
-            <div class="stat-icon">🌱</div>
-            <div class="stat-label">RECYCLING RATE</div>
-            <div class="stat-value">0%</div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(
+            '<div class="stat-card">'
+            '<div class="stat-icon">🌱</div>'
+            '<div class="stat-label">RECYCLING RATE</div>'
+            '<div class="stat-value">0%</div>'
+            '</div>',
+            unsafe_allow_html=True
+        )
 
     st.markdown(
         '<div class="section-title">💡 Getting Started</div>',
@@ -318,33 +312,26 @@ score_col1, score_col2 = st.columns([1, 2], gap="medium")
 
 with score_col1:
 
-    st.markdown(f"""
-    <div class="score-box">
-
-        <div class="score-label">
-            CURRENT SCORE
+    st.markdown(
+        f'''
+        <div class="score-box">
+            <div class="score-label">CURRENT SCORE</div>
+            <div class="score-number">{eco_score}/100</div>
+            <div class="score-description">
+                Your score reflects your recycling,
+                segregation and waste-recording habits.
+            </div>
         </div>
-
-        <div class="score-number">
-            {eco_score}/100
-        </div>
-
-        <div class="score-description">
-            Your score reflects your recycling,
-            segregation and waste-recording habits.
-        </div>
-
-    </div>
-    """, unsafe_allow_html=True)
+        ''',
+        unsafe_allow_html=True
+    )
 
 
 with score_col2:
 
     st.write("")
 
-    st.progress(
-        eco_score / 100
-    )
+    st.progress(eco_score / 100)
 
     if eco_score >= 80:
 
@@ -382,80 +369,60 @@ col1, col2, col3, col4 = st.columns(4, gap="medium")
 
 with col1:
 
-    st.markdown(f"""
-    <div class="stat-card">
-
-        <div class="stat-icon">♻️</div>
-
-        <div class="stat-label">
-            TOTAL WASTE
+    st.markdown(
+        f'''
+        <div class="stat-card">
+            <div class="stat-icon">♻️</div>
+            <div class="stat-label">TOTAL WASTE</div>
+            <div class="stat-value">{total_weight:.2f} kg</div>
         </div>
-
-        <div class="stat-value">
-            {total_weight:.2f} kg
-        </div>
-
-    </div>
-    """, unsafe_allow_html=True)
+        ''',
+        unsafe_allow_html=True
+    )
 
 
 with col2:
 
-    st.markdown(f"""
-    <div class="stat-card">
-
-        <div class="stat-icon">📋</div>
-
-        <div class="stat-label">
-            TOTAL ENTRIES
+    st.markdown(
+        f'''
+        <div class="stat-card">
+            <div class="stat-icon">📋</div>
+            <div class="stat-label">TOTAL ENTRIES</div>
+            <div class="stat-value">{total_entries}</div>
         </div>
-
-        <div class="stat-value">
-            {total_entries}
-        </div>
-
-    </div>
-    """, unsafe_allow_html=True)
+        ''',
+        unsafe_allow_html=True
+    )
 
 
 with col3:
 
-    st.markdown(f"""
-    <div class="stat-card">
-
-        <div class="stat-icon">🌱</div>
-
-        <div class="stat-label">
-            RECYCLING RATE
+    st.markdown(
+        f'''
+        <div class="stat-card">
+            <div class="stat-icon">🌱</div>
+            <div class="stat-label">RECYCLING RATE</div>
+            <div class="stat-value">{recycling_rate:.1f}%</div>
         </div>
-
-        <div class="stat-value">
-            {recycling_rate:.1f}%
-        </div>
-
-    </div>
-    """, unsafe_allow_html=True)
+        ''',
+        unsafe_allow_html=True
+    )
 
 
 with col4:
 
     most_common = df["Category"].value_counts().idxmax()
 
-    st.markdown(f"""
-    <div class="stat-card">
-
-        <div class="stat-icon">📦</div>
-
-        <div class="stat-label">
-            MOST COMMON
+    st.markdown(
+        f'''
+        <div class="stat-card">
+            <div class="stat-icon">📦</div>
+            <div class="stat-label">MOST COMMON</div>
+            <div class="stat-value">{most_common}</div>
         </div>
-
-        <div class="stat-value">
-            {most_common}
-        </div>
-
-    </div>
-    """, unsafe_allow_html=True)
+        ''',
+        unsafe_allow_html=True
+    )
 
 
 # ============================================================
@@ -508,40 +475,36 @@ col1, col2 = st.columns(2, gap="medium")
 
 with col1:
 
-    st.markdown(f"""
-    <div class="info-box">
-
-        <div class="info-title">
-            ♻️ Recyclable Waste
+    st.markdown(
+        f'''
+        <div class="info-box">
+            <div class="info-title">♻️ Recyclable Waste</div>
+            <div class="info-text">
+                You have recorded
+                <strong>{recyclable_weight:.2f} kg</strong>
+                of recyclable materials.
+            </div>
         </div>
-
-        <div class="info-text">
-            You have recorded
-            <strong>{recyclable_weight:.2f} kg</strong>
-            of recyclable materials.
-        </div>
-
-    </div>
-    """, unsafe_allow_html=True)
+        ''',
+        unsafe_allow_html=True
+    )
 
 
 with col2:
 
-    st.markdown(f"""
-    <div class="info-box">
-
-        <div class="info-title">
-            🌱 Recycling Rate
+    st.markdown(
+        f'''
+        <div class="info-box">
+            <div class="info-title">🌱 Recycling Rate</div>
+            <div class="info-text">
+                <strong>{recycling_rate:.1f}%</strong>
+                of your recorded waste belongs to
+                recyclable categories.
+            </div>
         </div>
-
-        <div class="info-text">
-            <strong>{recycling_rate:.1f}%</strong>
-            of your recorded waste belongs to
-            recyclable categories.
-        </div>
-
-    </div>
-    """, unsafe_allow_html=True)
+        ''',
+        unsafe_allow_html=True
+    )
 
 
 # ============================================================
