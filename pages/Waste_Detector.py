@@ -42,12 +42,22 @@ if section == "🔍 Waste Detector":
         """
         Upload an image of waste and use WasteVision
         to identify the appropriate waste category.
+
+        Detection runs live in your browser (TensorFlow.js + COCO-SSD) —
+        no server call, no upload to any backend.
         """
     )
 
     # --------------------------------------------------
     # LOAD WASTE HTML
     # --------------------------------------------------
+    # Save the detector file I generated as "detector.html" in the same
+    # folder as your old "waste.html" (i.e. BASE_DIR below). If you'd
+    # rather keep the old filename, just rename the new file to
+    # "waste.html" and change WASTE_HTML_FILENAME back to that — no other
+    # code changes needed either way.
+
+    WASTE_HTML_FILENAME = "detector.html"
 
     BASE_DIR = os.path.dirname(
         os.path.dirname(os.path.abspath(__file__))
@@ -55,7 +65,7 @@ if section == "🔍 Waste Detector":
 
     WASTE_HTML = os.path.join(
         BASE_DIR,
-        "waste.html"
+        WASTE_HTML_FILENAME
     )
 
     with open(WASTE_HTML, "r", encoding="utf-8") as f:
@@ -63,7 +73,7 @@ if section == "🔍 Waste Detector":
 
     components.html(
         html_content,
-        height=900,
+        height=950,   # new layout is a bit taller than the old demo card
         scrolling=True
     )
 
@@ -75,13 +85,18 @@ if section == "🔍 Waste Detector":
 
     st.subheader("📊 Record Detection")
 
+    st.caption(
+        "The detector above shows live results per object — pick the "
+        "stream it sorted your item into and log it here."
+    )
+
     detected_waste = st.selectbox(
         "Select the detected waste category",
         [
-            "Plastic 🧴",
-            "Paper 📄",
+            "Recyclable ♻️",
             "Organic 🍃",
-            "Metal 🔩"
+            "Hazardous ☣️",
+            "General 🗑️"
         ]
     )
 
