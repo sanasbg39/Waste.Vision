@@ -289,6 +289,30 @@
     scanBtn.textContent = 'Scan again';
   }
 
+  // COCO-SSD has no "can" class, so it will always call a can "bottle" or
+  // "cup". This estimates can-vs-bottle-vs-cup from the bounding box's
+  // height-to-width ratio (cans read squatter/more cylindrical than
+  // bottles, which have a distinct neck). It's a rough shape heuristic,
+  // not verified recognition — always shown labeled as an estimate.
+  function refineLabel(p) {
+    const [, , w, h] = p.bbox;
+    const ratio = h / w; // >1 means taller than wide
+
+    if (p.class === 'bottle') {
+      // Bottles (incl. neck) usually read taller/narrower than cans.
+      return ratio < 1.8
+        ? { label: 'can', estimated: true }
+        : { label: 'bottle', estimated: false };
+    }
+    if (p.class === 'cup') {
+      // A "cup" reading unusually tall/narrow is more likely a can.
+      return ratio > 2.0
+        ? { label: 'can', estimated: true }
+        : { label: 'cup', estimated: false };
+    }
+    return { label: p.class, estimated: false };
+  }
+
   function renderDetections(predictions) {
     previewWrap.querySelectorAll('.bbox').forEach(b => b.remove());
 
@@ -311,18 +335,23 @@
       const widthPct = (w / natW) * 100;
       const heightPct = (h / natH) * 100;
 
+      const refined = refineLabel(p);
+
       const box = document.createElement('div');
       box.className = 'bbox';
       box.style.left = leftPct + '%';
       box.style.top = topPct + '%';
       box.style.width = widthPct + '%';
       box.style.height = heightPct + '%';
-      box.innerHTML = `<div class="bbox-label">${p.class} ${(p.score*100).toFixed(0)}%</div>`;
+      box.innerHTML = `<div class="bbox-label">${refined.label} ${(p.score*100).toFixed(0)}%</div>`;
       previewWrap.appendChild(box);
 
       const [stream, icon, guidance] = WASTE_MAP[p.class] || DEFAULT_CATEGORY;
       const confColor = CATEGORY_COLOR[stream] || 'var(--muted)';
       const confBg = CATEGORY_BG[stream] || CATEGORY_BG['General'];
+      const estimateNote = refined.estimated
+        ? ' <span style="color:var(--muted);font-style:italic;">(guessed from shape, not verified)</span>'
+        : '';
 
       // Standard waste-stream category leads (bold, colored, with icon);
       // the specific detected item is the supporting line underneath.
@@ -332,7 +361,7 @@
         <div class="det-icon" style="background:${confBg}; color:${confColor}">${icon}</div>
         <div class="det-info">
           <div class="det-category" style="color:${confColor}">${stream}</div>
-          <div class="det-sub">Detected: <b>${p.class}</b> — ${guidance}</div>
+          <div class="det-sub">Detected: <b>${refined.label}</b>${estimateNote} — ${guidance}</div>
         </div>
         <div class="det-conf" style="color:${confColor}">${(p.score*100).toFixed(0)}%</div>
       `;
