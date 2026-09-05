@@ -21,19 +21,22 @@
   html{scroll-behavior:smooth;}
   body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:16px;line-height:1.6;min-height:100vh;}
 
-  nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 2rem;height:60px;background:rgba(10,15,13,0.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);}
+  /* Static, not fixed — fixed positioning behaves inconsistently once
+     this file is embedded inside another page's iframe (e.g. Streamlit),
+     causing misalignment against the content below it. */
+  nav{display:flex;align-items:center;justify-content:space-between;padding:1rem 2rem;background:var(--surface);border-bottom:1px solid var(--border);}
   .logo{font-family:'Space Mono',monospace;font-weight:700;font-size:1.1rem;color:var(--accent);}
   .logo span{color:var(--text);}
   .model-badge{font-family:'Space Mono',monospace;font-size:0.72rem;color:var(--muted);display:flex;align-items:center;gap:0.5rem;}
-  .model-dot{width:8px;height:8px;border-radius:50%;background:var(--warn);}
+  .model-dot{width:8px;height:8px;border-radius:50%;background:var(--warn);flex-shrink:0;}
   .model-dot.ready{background:var(--accent);box-shadow:0 0 6px var(--accent);}
 
-  .hero{padding:120px 2rem 3rem;text-align:center;max-width:700px;margin:0 auto;}
+  .hero{padding:3rem 2rem 2rem;text-align:center;max-width:700px;margin:0 auto;}
   .eyebrow{font-family:'Space Mono',monospace;font-size:0.75rem;letter-spacing:0.15em;color:var(--accent);text-transform:uppercase;margin-bottom:1rem;}
   .hero h1{font-size:clamp(2.2rem,5vw,3.4rem);font-weight:700;line-height:1.1;letter-spacing:-0.02em;}
   .hero p{margin-top:1.25rem;color:var(--muted);font-size:1.05rem;}
 
-  .section{padding:2rem 2rem 6rem;max-width:1000px;margin:0 auto;}
+  .section{padding:1rem 2rem 4rem;max-width:1000px;margin:0 auto;}
   .demo-grid{display:grid;grid-template-columns:1fr 360px;gap:1.5rem;align-items:start;}
 
   .upload-zone{border:2px dashed var(--border);border-radius:16px;background:var(--card);min-height:420px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;cursor:pointer;transition:border-color .25s,background .25s;position:relative;overflow:hidden;text-align:center;padding:2rem;}
@@ -52,7 +55,7 @@
   .results-panel{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;min-height:420px;}
   .panel-header{padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
   .panel-title{font-family:'Space Mono',monospace;font-size:0.78rem;font-weight:700;letter-spacing:0.06em;color:var(--muted);text-transform:uppercase;}
-  .status-dot{width:8px;height:8px;border-radius:50%;background:var(--accent-dim);transition:background .3s;}
+  .status-dot{width:8px;height:8px;border-radius:50%;background:var(--accent-dim);transition:background .3s;flex-shrink:0;}
   .status-dot.active{background:var(--accent);box-shadow:0 0 6px var(--accent);animation:pulse 1.2s ease infinite;}
   .panel-body{padding:1.25rem;flex:1;display:flex;flex-direction:column;gap:0.75rem;overflow-y:auto;}
   .empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);font-size:0.875rem;gap:0.5rem;text-align:center;}
@@ -60,20 +63,19 @@
 
   .detection-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:0.85rem 1rem;display:flex;align-items:center;gap:0.75rem;opacity:0;transform:translateX(8px);transition:opacity .3s,transform .3s;}
   .detection-item.show{opacity:1;transform:translateX(0);}
-  .det-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;background:rgba(57,255,133,0.08);}
-  .det-info{flex:1;}
-  .det-name{font-weight:600;font-size:0.9rem;text-transform:capitalize;}
-  .det-sub{font-size:0.78rem;color:var(--muted);margin-top:1px;}
-  .det-conf{font-family:'Space Mono',monospace;font-size:0.8rem;font-weight:700;}
-  .tag{display:inline-block;padding:0.2rem 0.6rem;border-radius:4px;font-size:0.7rem;font-weight:700;font-family:'Space Mono',monospace;letter-spacing:0.04em;}
-  .tag-recycle{background:rgba(57,255,133,0.12);color:var(--accent);}
-  .tag-organic{background:rgba(255,184,48,0.12);color:var(--warn);}
-  .tag-hazard{background:rgba(255,77,77,0.12);color:var(--danger);}
-  .tag-general{background:rgba(107,125,110,0.15);color:var(--muted);}
+  .det-icon{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;}
+  .det-info{flex:1;min-width:0;}
+  .det-category{font-weight:700;font-size:0.95rem;}
+  .det-sub{font-size:0.78rem;color:var(--muted);margin-top:2px;}
+  .det-sub b{color:var(--text);font-weight:600;text-transform:capitalize;}
+  .det-conf{font-family:'Space Mono',monospace;font-size:0.8rem;font-weight:700;text-align:right;flex-shrink:0;}
 
-  .scan-btn{width:100%;margin-top:auto;background:var(--accent);color:var(--bg);border:none;border-radius:8px;padding:0.85rem;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:0.95rem;cursor:pointer;transition:opacity .2s,transform .15s;}
+  .scan-btn{width:100%;background:var(--accent);color:var(--bg);border:none;border-radius:8px;padding:0.85rem;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:0.95rem;cursor:pointer;transition:opacity .2s,transform .15s;}
   .scan-btn:hover{opacity:0.88;transform:translateY(-1px);}
   .scan-btn:disabled{opacity:0.35;cursor:not-allowed;transform:none;}
+  .new-image-btn{width:100%;margin-top:0.6rem;background:transparent;color:var(--text);border:1px solid var(--border);border-radius:8px;padding:0.7rem;font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:0.85rem;cursor:pointer;transition:border-color .2s,color .2s;display:none;}
+  .new-image-btn:hover{border-color:var(--accent);color:var(--accent);}
+  .new-image-btn.show{display:block;}
   .scan-btn-wrap{padding:0 1.25rem 1.25rem;}
 
   footer{border-top:1px solid var(--border);padding:2rem;text-align:center;color:var(--muted);font-size:0.8rem;}
@@ -124,6 +126,7 @@
       </div>
       <div class="scan-btn-wrap">
         <button class="scan-btn" id="scanBtn" disabled onclick="runScan()">Loading model…</button>
+        <button class="new-image-btn" id="newImageBtn" onclick="resetToPrompt()">🔄 Scan another image</button>
       </div>
     </div>
   </div>
@@ -134,45 +137,57 @@
 </footer>
 
 <script>
-  // Map COCO-SSD's 80 general object classes to a waste stream.
-  // This is the piece you'd replace with a properly trained classifier
-  // later — everything else here (detection, boxes, confidence) is real
-  // model output, not scripted data.
+  // Map COCO-SSD's 80 general object classes to a standard waste stream,
+  // each with an icon so the category reads at a glance. This lookup table
+  // is the piece you'd swap for a properly trained classifier later —
+  // detection, boxes, and confidence below are real model output.
   const WASTE_MAP = {
-    'bottle':        ['Recyclable','tag-recycle','Rinse, remove cap, place in recycling'],
-    'wine glass':    ['Recyclable','tag-recycle','Glass recycling — rinse first'],
-    'cup':           ['Recyclable','tag-recycle','Rinse if plastic/paper — check local rules'],
-    'book':          ['Recyclable','tag-recycle','Paper recycling bin'],
-    'banana':        ['Organic','tag-organic','Compostable — organic bin'],
-    'apple':         ['Organic','tag-organic','Compostable — organic bin'],
-    'orange':        ['Organic','tag-organic','Compostable — organic bin'],
-    'broccoli':      ['Organic','tag-organic','Compostable — organic bin'],
-    'carrot':        ['Organic','tag-organic','Compostable — organic bin'],
-    'sandwich':      ['Organic','tag-organic','Compostable food scraps — organic bin'],
-    'pizza':         ['Organic','tag-organic','Compostable food scraps — organic bin'],
-    'donut':         ['Organic','tag-organic','Compostable food scraps — organic bin'],
-    'cake':          ['Organic','tag-organic','Compostable food scraps — organic bin'],
-    'cell phone':    ['Hazardous','tag-hazard','E-waste — drop-off at collection point only'],
-    'laptop':        ['Hazardous','tag-hazard','E-waste — drop-off at collection point only'],
-    'tv':            ['Hazardous','tag-hazard','E-waste — drop-off at collection point only'],
-    'microwave':     ['Hazardous','tag-hazard','E-waste — drop-off at collection point only'],
-    'toaster':       ['Hazardous','tag-hazard','E-waste — drop-off at collection point only'],
-    'keyboard':      ['Hazardous','tag-hazard','E-waste — drop-off at collection point only'],
-    'mouse':         ['Hazardous','tag-hazard','E-waste — drop-off at collection point only'],
-    'remote':        ['Hazardous','tag-hazard','E-waste (with battery) — drop-off point'],
-    'hair drier':    ['Hazardous','tag-hazard','E-waste — drop-off at collection point only'],
-    'fork':          ['General','tag-general','General waste unless metal — check locally'],
-    'knife':         ['General','tag-general','General waste unless metal — check locally'],
-    'spoon':         ['General','tag-general','General waste unless metal — check locally'],
-    'bowl':          ['General','tag-general','Depends on material — ceramic is general waste'],
-    'vase':          ['General','tag-general','Ceramics/glassware — usually general waste'],
-    'toothbrush':    ['General','tag-general','Not recyclable curbside in most areas'],
-    'scissors':      ['General','tag-general','Metal — check local scrap recycling'],
-    'handbag':       ['General','tag-general','Textile/leather — check local textile recycling'],
-    'backpack':      ['General','tag-general','Textile — check local textile recycling'],
-    'suitcase':      ['General','tag-general','Mixed materials — general waste or donate'],
+    'bottle':        ['Recyclable','♻️','Rinse, remove cap, place in recycling'],
+    'wine glass':    ['Recyclable','♻️','Glass recycling — rinse first'],
+    'cup':           ['Recyclable','♻️','Rinse if plastic/paper — check local rules'],
+    'book':          ['Recyclable','♻️','Paper recycling bin'],
+    'banana':        ['Organic','🌱','Compostable — organic bin'],
+    'apple':         ['Organic','🌱','Compostable — organic bin'],
+    'orange':        ['Organic','🌱','Compostable — organic bin'],
+    'broccoli':      ['Organic','🌱','Compostable — organic bin'],
+    'carrot':        ['Organic','🌱','Compostable — organic bin'],
+    'sandwich':      ['Organic','🌱','Compostable food scraps — organic bin'],
+    'pizza':         ['Organic','🌱','Compostable food scraps — organic bin'],
+    'donut':         ['Organic','🌱','Compostable food scraps — organic bin'],
+    'cake':          ['Organic','🌱','Compostable food scraps — organic bin'],
+    'cell phone':    ['Hazardous','⚠️','E-waste — drop-off at collection point only'],
+    'laptop':        ['Hazardous','⚠️','E-waste — drop-off at collection point only'],
+    'tv':            ['Hazardous','⚠️','E-waste — drop-off at collection point only'],
+    'microwave':     ['Hazardous','⚠️','E-waste — drop-off at collection point only'],
+    'toaster':       ['Hazardous','⚠️','E-waste — drop-off at collection point only'],
+    'keyboard':      ['Hazardous','⚠️','E-waste — drop-off at collection point only'],
+    'mouse':         ['Hazardous','⚠️','E-waste — drop-off at collection point only'],
+    'remote':        ['Hazardous','⚠️','E-waste (with battery) — drop-off point'],
+    'hair drier':    ['Hazardous','⚠️','E-waste — drop-off at collection point only'],
+    'fork':          ['General','🗑️','General waste unless metal — check locally'],
+    'knife':         ['General','🗑️','General waste unless metal — check locally'],
+    'spoon':         ['General','🗑️','General waste unless metal — check locally'],
+    'bowl':          ['General','🗑️','Depends on material — ceramic is general waste'],
+    'vase':          ['General','🗑️','Ceramics/glassware — usually general waste'],
+    'toothbrush':    ['General','🗑️','Not recyclable curbside in most areas'],
+    'scissors':      ['General','🗑️','Metal — check local scrap recycling'],
+    'handbag':       ['General','🗑️','Textile/leather — check local textile recycling'],
+    'backpack':      ['General','🗑️','Textile — check local textile recycling'],
+    'suitcase':      ['General','🗑️','Mixed materials — general waste or donate'],
   };
-  const DEFAULT_CATEGORY = ['General','tag-general','Unrecognized item — check local disposal guidelines'];
+  const DEFAULT_CATEGORY = ['General','🗑️','Unrecognized item — check local disposal guidelines'];
+  const CATEGORY_COLOR = {
+    'Recyclable': 'var(--accent)',
+    'Organic':    'var(--warn)',
+    'Hazardous':  'var(--danger)',
+    'General':    'var(--muted)',
+  };
+  const CATEGORY_BG = {
+    'Recyclable': 'rgba(57,255,133,0.12)',
+    'Organic':    'rgba(255,184,48,0.12)',
+    'Hazardous':  'rgba(255,77,77,0.12)',
+    'General':    'rgba(107,125,110,0.15)',
+  };
 
   let model = null;
   let hasImage = false;
@@ -183,6 +198,7 @@
   const previewWrap  = document.getElementById('previewWrap');
   const previewImg   = document.getElementById('previewImg');
   const scanBtn      = document.getElementById('scanBtn');
+  const newImageBtn  = document.getElementById('newImageBtn');
   const modelDot     = document.getElementById('modelDot');
   const modelStatus  = document.getElementById('modelStatus');
 
@@ -220,6 +236,7 @@
         previewWrap.classList.add('show');
         hasImage = true;
         resetResults();
+        newImageBtn.classList.add('show');
         if (model) {
           scanBtn.disabled = false;
           scanBtn.textContent = 'Scan for Waste';
@@ -227,6 +244,23 @@
       };
     };
     reader.readAsDataURL(file);
+  }
+
+  // The preview image visually covers the invisible file input once one
+  // is loaded, so re-clicking the upload zone silently does nothing after
+  // the first image. This button resets state and reopens the picker
+  // directly, so a second scan doesn't require a page reload.
+  function resetToPrompt() {
+    hasImage = false;
+    previewWrap.classList.remove('show');
+    previewImg.src = '';
+    promptState.style.display = '';
+    fileInput.value = ''; // allows re-selecting the same file, too
+    resetResults();
+    newImageBtn.classList.remove('show');
+    scanBtn.disabled = true;
+    scanBtn.textContent = model ? 'Scan for Waste' : 'Loading model…';
+    fileInput.click();
   }
 
   function resetResults() {
@@ -286,21 +320,21 @@
       box.innerHTML = `<div class="bbox-label">${p.class} ${(p.score*100).toFixed(0)}%</div>`;
       previewWrap.appendChild(box);
 
-      const [stream, tag, guidance] = WASTE_MAP[p.class] || DEFAULT_CATEGORY;
-      const confColor = tag==='tag-recycle' ? 'var(--accent)' : tag==='tag-organic' ? 'var(--warn)' : tag==='tag-hazard' ? 'var(--danger)' : 'var(--muted)';
+      const [stream, icon, guidance] = WASTE_MAP[p.class] || DEFAULT_CATEGORY;
+      const confColor = CATEGORY_COLOR[stream] || 'var(--muted)';
+      const confBg = CATEGORY_BG[stream] || CATEGORY_BG['General'];
 
+      // Standard waste-stream category leads (bold, colored, with icon);
+      // the specific detected item is the supporting line underneath.
       const el = document.createElement('div');
       el.className = 'detection-item';
       el.innerHTML = `
-        <div class="det-icon">🔍</div>
+        <div class="det-icon" style="background:${confBg}; color:${confColor}">${icon}</div>
         <div class="det-info">
-          <div class="det-name">${p.class}</div>
-          <div class="det-sub">${guidance}</div>
+          <div class="det-category" style="color:${confColor}">${stream}</div>
+          <div class="det-sub">Detected: <b>${p.class}</b> — ${guidance}</div>
         </div>
-        <div>
-          <div class="det-conf" style="color:${confColor}">${(p.score*100).toFixed(0)}%</div>
-          <div style="margin-top:4px;"><span class="tag ${tag}">${stream}</span></div>
-        </div>
+        <div class="det-conf" style="color:${confColor}">${(p.score*100).toFixed(0)}%</div>
       `;
       det.appendChild(el);
       setTimeout(() => el.classList.add('show'), i * 150 + 50);
