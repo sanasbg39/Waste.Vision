@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SortAI — Instant Waste Sorter</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<!-- Real, pretrained, in-browser object detector. No server, no install. -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+
+<style>
+  :root {
+    --bg:#0A0F0D; --surface:#111813; --card:#161E18; --border:#1E2B21;
+    --accent:#39FF85; --accent-dim:#1A7A3D; --warn:#FFB830; --danger:#FF4D4D;
+    --text:#E8F0EA; --muted:#6B7D6E; --scan:rgba(57,255,133,0.08);
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:16px;line-height:1.6;min-height:100vh;}
+
+  nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 2rem;height:60px;background:rgba(10,15,13,0.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);}
+  .logo{font-family:'Space Mono',monospace;font-weight:700;font-size:1.1rem;color:var(--accent);}
+  .logo span{color:var(--text);}
+  .model-badge{font-family:'Space Mono',monospace;font-size:0.72rem;color:var(--muted);display:flex;align-items:center;gap:0.5rem;}
+  .model-dot{width:8px;height:8px;border-radius:50%;background:var(--warn);}
+  .model-dot.ready{background:var(--accent);box-shadow:0 0 6px var(--accent);}
+
+  .hero{padding:120px 2rem 3rem;text-align:center;max-width:700px;margin:0 auto;}
+  .eyebrow{font-family:'Space Mono',monospace;font-size:0.75rem;letter-spacing:0.15em;color:var(--accent);text-transform:uppercase;margin-bottom:1rem;}
+  .hero h1{font-size:clamp(2.2rem,5vw,3.4rem);font-weight:700;line-height:1.1;letter-spacing:-0.02em;}
+  .hero p{margin-top:1.25rem;color:var(--muted);font-size:1.05rem;}
+
+  .section{padding:2rem 2rem 6rem;max-width:1000px;margin:0 auto;}
+  .demo-grid{display:grid;grid-template-columns:1fr 360px;gap:1.5rem;align-items:start;}
+
+  .upload-zone{border:2px dashed var(--border);border-radius:16px;background:var(--card);min-height:420px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;cursor:pointer;transition:border-color .25s,background .25s;position:relative;overflow:hidden;text-align:center;padding:2rem;}
+  .upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:var(--scan);}
+  .upload-icon{width:64px;height:64px;background:rgba(57,255,133,0.08);border:1px solid var(--border);border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:1.8rem;}
+  .upload-zone h3{font-size:1.1rem;font-weight:600;}
+  .upload-zone p{font-size:0.85rem;color:var(--muted);}
+  .upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;}
+
+  .preview-wrap{position:relative;width:100%;max-width:100%;display:none;}
+  .preview-wrap.show{display:block;}
+  .preview-img{width:100%;height:auto;display:block;border-radius:12px;}
+  .bbox{position:absolute;border:2px solid var(--accent);border-radius:4px;box-shadow:0 0 8px rgba(57,255,133,0.4);}
+  .bbox-label{position:absolute;top:-22px;left:0;font-family:'Space Mono',monospace;font-size:0.65rem;font-weight:700;background:var(--accent);color:var(--bg);padding:1px 6px;border-radius:3px;white-space:nowrap;}
+
+  .results-panel{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;min-height:420px;}
+  .panel-header{padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+  .panel-title{font-family:'Space Mono',monospace;font-size:0.78rem;font-weight:700;letter-spacing:0.06em;color:var(--muted);text-transform:uppercase;}
+  .status-dot{width:8px;height:8px;border-radius:50%;background:var(--accent-dim);transition:background .3s;}
+  .status-dot.active{background:var(--accent);box-shadow:0 0 6px var(--accent);animation:pulse 1.2s ease infinite;}
+  .panel-body{padding:1.25rem;flex:1;display:flex;flex-direction:column;gap:0.75rem;overflow-y:auto;}
+  .empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);font-size:0.875rem;gap:0.5rem;text-align:center;}
+  .empty-icon{font-size:2rem;opacity:0.4;}
+
+  .detection-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:0.85rem 1rem;display:flex;align-items:center;gap:0.75rem;opacity:0;transform:translateX(8px);transition:opacity .3s,transform .3s;}
+  .detection-item.show{opacity:1;transform:translateX(0);}
+  .det-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;background:rgba(57,255,133,0.08);}
+  .det-info{flex:1;}
+  .det-name{font-weight:600;font-size:0.9rem;text-transform:capitalize;}
+  .det-sub{font-size:0.78rem;color:var(--muted);margin-top:1px;}
+  .det-conf{font-family:'Space Mono',monospace;font-size:0.8rem;font-weight:700;}
+  .tag{display:inline-block;padding:0.2rem 0.6rem;border-radius:4px;font-size:0.7rem;font-weight:700;font-family:'Space Mono',monospace;letter-spacing:0.04em;}
+  .tag-recycle{background:rgba(57,255,133,0.12);color:var(--accent);}
+  .tag-organic{background:rgba(255,184,48,0.12);color:var(--warn);}
+  .tag-hazard{background:rgba(255,77,77,0.12);color:var(--danger);}
+  .tag-general{background:rgba(107,125,110,0.15);color:var(--muted);}
+
+  .scan-btn{width:100%;margin-top:auto;background:var(--accent);color:var(--bg);border:none;border-radius:8px;padding:0.85rem;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:0.95rem;cursor:pointer;transition:opacity .2s,transform .15s;}
+  .scan-btn:hover{opacity:0.88;transform:translateY(-1px);}
+  .scan-btn:disabled{opacity:0.35;cursor:not-allowed;transform:none;}
+  .scan-btn-wrap{padding:0 1.25rem 1.25rem;}
+
+  footer{border-top:1px solid var(--border);padding:2rem;text-align:center;color:var(--muted);font-size:0.8rem;}
+
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.4;}}
+
+  @media (max-width:780px){ .demo-grid{grid-template-columns:1fr;} .results-panel{min-height:260px;} }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Sort<span>AI</span></div>
+  <div class="model-badge"><div class="model-dot" id="modelDot"></div><span id="modelStatus">Loading model…</span></div>
+</nav>
+
+<section class="hero">
+  <div class="eyebrow">Real-Time Object Detection</div>
+  <h1>Drop a photo. See it sorted.</h1>
+  <p>Upload any image and SortAI detects objects in it, in your browser, then maps each one to the right disposal stream — recyclable, organic, hazardous, or general.</p>
+</section>
+
+<section class="section">
+  <div class="demo-grid">
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" id="fileInput" accept="image/*">
+      <div id="promptState">
+        <div class="upload-icon">📷</div>
+        <h3>Drop an image here</h3>
+        <p>or click to browse — JPG, PNG, WEBP</p>
+      </div>
+      <div class="preview-wrap" id="previewWrap">
+        <img class="preview-img" id="previewImg" alt="Uploaded preview">
+      </div>
+    </div>
+
+    <div class="results-panel">
+      <div class="panel-header">
+        <span class="panel-title">Detection Output</span>
+        <div class="status-dot" id="statusDot"></div>
+      </div>
+      <div class="panel-body">
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon">🔍</div>
+          <div>Upload an image to begin scanning</div>
+        </div>
+        <div id="detections" style="display:none;flex-direction:column;gap:0.75rem;flex:1;"></div>
+      </div>
+      <div class="scan-btn-wrap">
+        <button class="scan-btn" id="scanBtn" disabled onclick="runScan()">Loading model…</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  SortAI — runs fully client-side with TensorFlow.js + COCO-SSD. No server, no data leaves your browser.
+</footer>
+
+<script>
+  // Map COCO-SSD's 80 general object classes to a waste stream.
+  // This is the piece you'd replace with a properly trained classifier
+  // later — everything else here (detection, boxes, confidence) is real
+  // model output, not scripted data.
+  const WASTE_MAP = {
+    'bottle':        ['Recyclable','tag-recycle','Rinse, remove cap, place in recycling'],
+    'wine glass':    ['Recyclable','tag-recycle','Glass recycling — rinse first'],
+    'cup':           ['Recyclable','tag-recycle','Rinse if plastic/paper — check local rules'],
+    'book':          ['Recyclable','tag-recycle','Paper recycling bin'],
+    'banana':        ['Organic','tag-organic','Compostable — organic bin'],
+    'apple':         ['Organic','tag-organic','Compostable — organic bin'],
+    'orange':        ['Organic','tag-organic','Compostable — organic bin'],
+    'broccoli':      ['Organic','tag-organic','Compostable — organic bin'],
+    'carrot':        ['Organic','tag-organic','Compostable — organic bin'],
+    'sandwich':      ['Organic','tag-organic','Compostable food scraps — organic bin'],
+    'pizza':         ['Organic','tag-organic','Compostable food scraps — organic bin'],
+    'donut':         ['Organic','tag-organic','Compostable food scraps — organic bin'],
+    'cake':          ['Organic','tag-organic','Compostable food scraps — organic bin'],
+    'cell phone':    ['Hazardous','tag-hazard','E-waste — drop-off at collection point only'],
+    'laptop':        ['Hazardous','tag-hazard','E-waste — drop-off at collection point only'],
+    'tv':            ['Hazardous','tag-hazard','E-waste — drop-off at collection point only'],
+    'microwave':     ['Hazardous','tag-hazard','E-waste — drop-off at collection point only'],
+    'toaster':       ['Hazardous','tag-hazard','E-waste — drop-off at collection point only'],
+    'keyboard':      ['Hazardous','tag-hazard','E-waste — drop-off at collection point only'],
+    'mouse':         ['Hazardous','tag-hazard','E-waste — drop-off at collection point only'],
+    'remote':        ['Hazardous','tag-hazard','E-waste (with battery) — drop-off point'],
+    'hair drier':    ['Hazardous','tag-hazard','E-waste — drop-off at collection point only'],
+    'fork':          ['General','tag-general','General waste unless metal — check locally'],
+    'knife':         ['General','tag-general','General waste unless metal — check locally'],
+    'spoon':         ['General','tag-general','General waste unless metal — check locally'],
+    'bowl':          ['General','tag-general','Depends on material — ceramic is general waste'],
+    'vase':          ['General','tag-general','Ceramics/glassware — usually general waste'],
+    'toothbrush':    ['General','tag-general','Not recyclable curbside in most areas'],
+    'scissors':      ['General','tag-general','Metal — check local scrap recycling'],
+    'handbag':       ['General','tag-general','Textile/leather — check local textile recycling'],
+    'backpack':      ['General','tag-general','Textile — check local textile recycling'],
+    'suitcase':      ['General','tag-general','Mixed materials — general waste or donate'],
+  };
+  const DEFAULT_CATEGORY = ['General','tag-general','Unrecognized item — check local disposal guidelines'];
+
+  let model = null;
+  let hasImage = false;
+
+  const uploadZone   = document.getElementById('uploadZone');
+  const fileInput    = document.getElementById('fileInput');
+  const promptState  = document.getElementById('promptState');
+  const previewWrap  = document.getElementById('previewWrap');
+  const previewImg   = document.getElementById('previewImg');
+  const scanBtn      = document.getElementById('scanBtn');
+  const modelDot     = document.getElementById('modelDot');
+  const modelStatus  = document.getElementById('modelStatus');
+
+  // Load the pretrained detector once, on page load.
+  cocoSsd.load().then(loadedModel => {
+    model = loadedModel;
+    modelDot.classList.add('ready');
+    modelStatus.textContent = 'Model ready';
+    if (hasImage) {
+      scanBtn.disabled = false;
+      scanBtn.textContent = 'Scan for Waste';
+    }
+  }).catch(err => {
+    modelStatus.textContent = 'Model failed to load';
+    console.error(err);
+  });
+
+  uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag'); });
+  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag'));
+  uploadZone.addEventListener('drop', e => {
+    e.preventDefault(); uploadZone.classList.remove('drag');
+    const f = e.dataTransfer.files[0];
+    if (f && f.type.startsWith('image/')) loadFile(f);
+  });
+  fileInput.addEventListener('change', e => {
+    if (e.target.files[0]) loadFile(e.target.files[0]);
+  });
+
+  function loadFile(file) {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      previewImg.src = ev.target.result;
+      previewImg.onload = () => {
+        promptState.style.display = 'none';
+        previewWrap.classList.add('show');
+        hasImage = true;
+        resetResults();
+        if (model) {
+          scanBtn.disabled = false;
+          scanBtn.textContent = 'Scan for Waste';
+        }
+      };
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function resetResults() {
+    document.getElementById('emptyState').style.display = 'flex';
+    const det = document.getElementById('detections');
+    det.style.display = 'none';
+    det.innerHTML = '';
+    document.getElementById('statusDot').classList.remove('active');
+    previewWrap.querySelectorAll('.bbox').forEach(b => b.remove());
+  }
+
+  async function runScan() {
+    if (!hasImage || !model) return;
+
+    document.getElementById('statusDot').classList.add('active');
+    scanBtn.disabled = true;
+    scanBtn.textContent = 'Scanning…';
+    resetResults();
+    document.getElementById('emptyState').style.display = 'none';
+
+    // Real inference on the actual uploaded image — no timeout, no canned data.
+    const predictions = await model.detect(previewImg);
+
+    renderDetections(predictions);
+    scanBtn.disabled = false;
+    scanBtn.textContent = 'Scan again';
+  }
+
+  function renderDetections(predictions) {
+    previewWrap.querySelectorAll('.bbox').forEach(b => b.remove());
+
+    const det = document.getElementById('detections');
+    det.style.display = 'flex';
+    det.innerHTML = '';
+
+    if (!predictions || predictions.length === 0) {
+      det.innerHTML = `<div style="color:var(--muted);font-size:0.85rem;">No recognizable objects detected. Try a clearer, closer photo.</div>`;
+      return;
+    }
+
+    const natW = previewImg.naturalWidth;
+    const natH = previewImg.naturalHeight;
+
+    predictions.forEach((p, i) => {
+      const [x, y, w, h] = p.bbox; // pixel coords relative to natural image size
+      const leftPct = (x / natW) * 100;
+      const topPct = (y / natH) * 100;
+      const widthPct = (w / natW) * 100;
+      const heightPct = (h / natH) * 100;
+
+      const box = document.createElement('div');
+      box.className = 'bbox';
+      box.style.left = leftPct + '%';
+      box.style.top = topPct + '%';
+      box.style.width = widthPct + '%';
+      box.style.height = heightPct + '%';
+      box.innerHTML = `<div class="bbox-label">${p.class} ${(p.score*100).toFixed(0)}%</div>`;
+      previewWrap.appendChild(box);
+
+      const [stream, tag, guidance] = WASTE_MAP[p.class] || DEFAULT_CATEGORY;
+      const confColor = tag==='tag-recycle' ? 'var(--accent)' : tag==='tag-organic' ? 'var(--warn)' : tag==='tag-hazard' ? 'var(--danger)' : 'var(--muted)';
+
+      const el = document.createElement('div');
+      el.className = 'detection-item';
+      el.innerHTML = `
+        <div class="det-icon">🔍</div>
+        <div class="det-info">
+          <div class="det-name">${p.class}</div>
+          <div class="det-sub">${guidance}</div>
+        </div>
+        <div>
+          <div class="det-conf" style="color:${confColor}">${(p.score*100).toFixed(0)}%</div>
+          <div style="margin-top:4px;"><span class="tag ${tag}">${stream}</span></div>
+        </div>
+      `;
+      det.appendChild(el);
+      setTimeout(() => el.classList.add('show'), i * 150 + 50);
+    });
+  }
+</script>
+</body>
+</html>
